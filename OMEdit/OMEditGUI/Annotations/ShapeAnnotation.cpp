@@ -1113,6 +1113,20 @@ void ShapeAnnotation::referenceShapeChanged()
 }
 
 /*!
+ * \brief ShapeAnnotation::referenceShapeOrderChanged
+ * Slot activated when some shape in parent class is ordered.
+ * Calls the GraphicsView::reOrderShapes() for child class.
+ * \param orderType
+ */
+void ShapeAnnotation::referenceShapeOrderChanged(ShapeAnnotation::OrderType orderType)
+{
+  if (mpGraphicsView) {
+    mpGraphicsView->orderShapeInList(this, orderType, true);
+    mpGraphicsView->reOrderShapes();
+  }
+}
+
+/*!
  * \brief ShapeAnnotation::referenceShapeDeleted
  */
 void ShapeAnnotation::referenceShapeDeleted()

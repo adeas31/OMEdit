@@ -59,6 +59,17 @@ private:
   QString mNewAnnotation;
 };
 
+class OrderShapeCommand : public QUndoCommand
+{
+public:
+  OrderShapeCommand(ShapeAnnotation *pShapeAnnotation, ShapeAnnotation::OrderType orderType, QUndoCommand *pParent = 0);
+  void redo();
+  void undo();
+private:
+  ShapeAnnotation *mpShapeAnnotation;
+  ShapeAnnotation::OrderType mOrderType;
+};
+
 class DeleteShapeCommand : public QUndoCommand
 {
 public:

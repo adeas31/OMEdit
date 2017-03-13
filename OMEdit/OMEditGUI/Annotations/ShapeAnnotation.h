@@ -114,6 +114,7 @@ private:
   QAction *mpShapeAttributesAction;
 public:
   enum LineGeometryType {VerticalLine, HorizontalLine};
+  enum OrderType {BringToFront, BringForward, SendToBack, SendBackward};
   Transformation mTransformation;
   ShapeAnnotation(QGraphicsItem *pParent);
   ShapeAnnotation(bool inheritedShape, GraphicsView *pGraphicsView, QGraphicsItem *pParent = 0);
@@ -190,12 +191,14 @@ public:
   virtual void updateShape(ShapeAnnotation *pShapeAnnotation);
   void emitAdded() {emit added();}
   void emitChanged() {emit changed();}
+  void emitOrderChanged(ShapeAnnotation::OrderType orderType) {emit orderChanged(orderType);}
   void emitDeleted() {emit deleted();}
   void emitPrepareGeometryChange() {prepareGeometryChange();}
 signals:
   void updateReferenceShapes();
   void added();
   void changed();
+  void orderChanged(ShapeAnnotation::OrderType orderType);
   void deleted();
 public slots:
   void deleteConnection();
@@ -230,6 +233,7 @@ public slots:
   void manhattanizeShape(bool addToStack = true);
   void referenceShapeAdded();
   void referenceShapeChanged();
+  void referenceShapeOrderChanged(ShapeAnnotation::OrderType orderType);
   void referenceShapeDeleted();
   void updateVisible();
 protected:

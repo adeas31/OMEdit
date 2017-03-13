@@ -622,6 +622,16 @@ void GraphicsView::addShapeToList(ShapeAnnotation *pShape, int index)
   }
 }
 
+void GraphicsView::addInheritedShapeToMapList(LibraryTreeItem *pLibraryTreeItem, ShapeAnnotation *pShapeAnnotation)
+{
+  QList<ShapeAnnotation*> shapesList;
+  if (mInheritedShapesMapList.contains(pLibraryTreeItem)) {
+    shapesList = mInheritedShapesMapList.value(pLibraryTreeItem);
+  }
+  shapesList.append(pShapeAnnotation);
+//  mInheritedShapesMapList.
+}
+
 /*!
  * \brief GraphicsView::deleteShape
  * Deletes the shape from the icon/diagram layer.
@@ -631,6 +641,53 @@ void GraphicsView::deleteShape(ShapeAnnotation *pShapeAnnotation)
 {
   pShapeAnnotation->setSelected(false);
   mpModelWidget->getUndoStack()->push(new DeleteShapeCommand(pShapeAnnotation));
+}
+
+/*!
+ * \brief GraphicsView::moveShapeInList
+ * Orders the shape according to order type.
+ * \param pShapeAnnotation
+ * \param orderType
+ * \param inheritedList
+ */
+void GraphicsView::orderShapeInList(ShapeAnnotation *pShapeAnnotation, ShapeAnnotation::OrderType orderType, bool inheritedList)
+{
+  // pick the correct list
+  QList<ShapeAnnotation*> shapesList = mShapesList;
+  if (inheritedList) {
+    shapesList = mInheritedShapesList;
+  }
+  // Order shapes
+  if (orderType == ShapeAnnotation::BringToFront) {
+    int from = shapesList.indexOf(pShapeAnnotation);
+    int to = shapesList.size() - 1;
+    if (from > -1 && from < shapesList.size() && to > -1 && to < shapesList.size()) {
+      shapesList.move(from, to);
+    }
+  } else if (orderType == ShapeAnnotation::BringForward) {
+    int from = shapesList.indexOf(pShapeAnnotation);
+    int to = from + 1;
+    if (from > -1 && from < shapesList.size() && to > -1 && to < shapesList.size()) {
+      shapesList.move(from, to);
+    }
+  } else if (orderType == ShapeAnnotation::SendToBack) {
+    int from = shapesList.indexOf(pShapeAnnotation);
+    if (from > -1 && from < shapesList.size()) {
+      shapesList.move(from, 0);
+    }
+  } else if (orderType == ShapeAnnotation::SendBackward) {
+    int from = shapesList.indexOf(pShapeAnnotation);
+    int to = from - 1;
+    if (from > -1 && from < shapesList.size() && to > -1 && to < shapesList.size()) {
+      shapesList.move(from, to);
+    }
+  }
+  // save the correct list
+  if (inheritedList) {
+    mInheritedShapesList = shapesList;
+  } else {
+    mShapesList = shapesList;
+  }
 }
 
 /*!
@@ -666,82 +723,54 @@ void GraphicsView::reOrderShapes()
 
 /*!
  * \brief GraphicsView::bringToFront
- * \param pShape
+ * \param pShapeAnnotation
  * Brings the shape to front of all other shapes.
  */
-void GraphicsView::bringToFront(ShapeAnnotation *pShape)
+void GraphicsView::bringToFront(ShapeAnnotation *pShapeAnnotation)
 {
-  deleteShapeFromList(pShape);
-  int i = 0;
-  // update the shapes z index
-  for (; i < mShapesList.size() ; i++) {
-    mShapesList.at(i)->setZValue(i + 1);
-  }
-  pShape->setZValue(i + 1);
-  mShapesList.append(pShape);
-  // update class annotation.
-  addClassAnnotation();
+  OrderShapeCommand *pOrderShapeCommand = new OrderShapeCommand(pShapeAnnotation, ShapeAnnotation::BringToFront);
+  mpModelWidget->getUndoStack()->push(pOrderShapeCommand);
+  mpModelWidget->updateClassAnnotationIfNeeded();
+  mpModelWidget->updateModelText();
 }
 
 /*!
  * \brief GraphicsView::bringForward
- * \param pShape
+ * \param pShapeAnnotation
  * Brings the shape one level forward.
  */
-void GraphicsView::bringForward(ShapeAnnotation *pShape)
+void GraphicsView::bringForward(ShapeAnnotation *pShapeAnnotation)
 {
-  int shapeIndex = mShapesList.indexOf(pShape);
-  if (shapeIndex == -1 || shapeIndex == mShapesList.size() - 1) { // if the shape is already at top.
-    return;
-  }
-  // swap the shapes in the list
-  mShapesList.swap(shapeIndex, shapeIndex + 1);
-  // update the shapes z index
-  for (int i = 0 ; i < mShapesList.size() ; i++) {
-    mShapesList.at(i)->setZValue(i + 1);
-  }
-  // update class annotation.
-  addClassAnnotation();
+  OrderShapeCommand *pOrderShapeCommand = new OrderShapeCommand(pShapeAnnotation, ShapeAnnotation::BringForward);
+  mpModelWidget->getUndoStack()->push(pOrderShapeCommand);
+  mpModelWidget->updateClassAnnotationIfNeeded();
+  mpModelWidget->updateModelText();
 }
 
 /*!
  * \brief GraphicsView::sendToBack
- * \param pShape
+ * \param pShapeAnnotation
  * Sends the shape to back of all other shapes.
  */
-void GraphicsView::sendToBack(ShapeAnnotation *pShape)
+void GraphicsView::sendToBack(ShapeAnnotation *pShapeAnnotation)
 {
-  deleteShapeFromList(pShape);
-  int i = 0;
-  pShape->setZValue(i + 1);
-  mShapesList.prepend(pShape);
-  // update the shapes z index
-  for (i = 1 ; i < mShapesList.size() ; i++) {
-    mShapesList.at(i)->setZValue(i + 1);
-  }
-  // update class annotation.
-  addClassAnnotation();
+  OrderShapeCommand *pOrderShapeCommand = new OrderShapeCommand(pShapeAnnotation, ShapeAnnotation::SendToBack);
+  mpModelWidget->getUndoStack()->push(pOrderShapeCommand);
+  mpModelWidget->updateClassAnnotationIfNeeded();
+  mpModelWidget->updateModelText();
 }
 
 /*!
  * \brief GraphicsView::sendBackward
- * \param pShape
+ * \param pShapeAnnotation
  * Sends the shape one level backward.
  */
-void GraphicsView::sendBackward(ShapeAnnotation *pShape)
+void GraphicsView::sendBackward(ShapeAnnotation *pShapeAnnotation)
 {
-  int shapeIndex = mShapesList.indexOf(pShape);
-  if (shapeIndex <= 0) { // if the shape is already at bottom.
-    return;
-  }
-  // swap the shapes in the list
-  mShapesList.swap(shapeIndex - 1, shapeIndex);
-  // update the shapes z index
-  for (int i = 0 ; i < mShapesList.size() ; i++) {
-    mShapesList.at(i)->setZValue(i + 1);
-  }
-  // update class annotation.
-  addClassAnnotation();
+  OrderShapeCommand *pOrderShapeCommand = new OrderShapeCommand(pShapeAnnotation, ShapeAnnotation::SendBackward);
+  mpModelWidget->getUndoStack()->push(pOrderShapeCommand);
+  mpModelWidget->updateClassAnnotationIfNeeded();
+  mpModelWidget->updateModelText();
 }
 
 void GraphicsView::createLineShape(QPointF point)
@@ -1077,22 +1106,18 @@ void GraphicsView::createActions()
   mpBringToFrontAction = new QAction(QIcon(":/Resources/icons/bring-to-front.svg"), tr("Bring to Front"), this);
   mpBringToFrontAction->setStatusTip(tr("Brings the item to front"));
   mpBringToFrontAction->setDisabled(isSystemLibrary);
-  mpBringToFrontAction->setDisabled(true);
   // Bring Forward Action
   mpBringForwardAction = new QAction(QIcon(":/Resources/icons/bring-forward.svg"), tr("Bring Forward"), this);
   mpBringForwardAction->setStatusTip(tr("Brings the item one level forward"));
   mpBringForwardAction->setDisabled(isSystemLibrary);
-  mpBringForwardAction->setDisabled(true);
   // Send To Back Action
   mpSendToBackAction = new QAction(QIcon(":/Resources/icons/send-to-back.svg"), tr("Send to Back"), this);
   mpSendToBackAction->setStatusTip(tr("Sends the item to back"));
   mpSendToBackAction->setDisabled(isSystemLibrary);
-  mpSendToBackAction->setDisabled(true);
   // Send Backward Action
   mpSendBackwardAction = new QAction(QIcon(":/Resources/icons/send-backward.svg"), tr("Send Backward"), this);
   mpSendBackwardAction->setStatusTip(tr("Sends the item one level backward"));
   mpSendBackwardAction->setDisabled(isSystemLibrary);
-  mpSendBackwardAction->setDisabled(true);
   // Rotate ClockWise Action
   mpRotateClockwiseAction = new QAction(QIcon(":/Resources/icons/rotateclockwise.svg"), tr("Rotate Clockwise"), this);
   mpRotateClockwiseAction->setStatusTip(tr("Rotates the item clockwise"));

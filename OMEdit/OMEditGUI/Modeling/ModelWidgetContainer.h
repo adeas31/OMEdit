@@ -102,6 +102,7 @@ private:
   QList<Component*> mInheritedComponentsList;
   QList<LineAnnotation*> mInheritedConnectionsList;
   QList<ShapeAnnotation*> mInheritedShapesList;
+  QMap<LibraryTreeItem*, QList<ShapeAnnotation*> > mInheritedShapesMapList;
   LineAnnotation *mpConnectionLineAnnotation;
   LineAnnotation *mpLineShapeAnnotation;
   PolygonAnnotation *mpPolygonShapeAnnotation;
@@ -195,14 +196,16 @@ public:
   void deleteInheritedConnectionFromList(LineAnnotation *pConnectionLineAnnotation) {mInheritedConnectionsList.removeOne(pConnectionLineAnnotation);}
   void addShapeToList(ShapeAnnotation *pShape, int index = -1);
   void addInheritedShapeToList(ShapeAnnotation *pShape) {mInheritedShapesList.append(pShape);}
+  void addInheritedShapeToMapList(LibraryTreeItem *pLibraryTreeItem, ShapeAnnotation *pShapeAnnotation);
   void deleteShape(ShapeAnnotation *pShapeAnnotation);
+  void orderShapeInList(ShapeAnnotation *pShapeAnnotation, ShapeAnnotation::OrderType orderType, bool inheritedList);
   int deleteShapeFromList(ShapeAnnotation *pShape);
   void deleteInheritedShapeFromList(ShapeAnnotation *pShape) {mInheritedShapesList.removeOne(pShape);}
   void reOrderShapes();
-  void bringToFront(ShapeAnnotation *pShape);
-  void bringForward(ShapeAnnotation *pShape);
-  void sendToBack(ShapeAnnotation *pShape);
-  void sendBackward(ShapeAnnotation *pShape);
+  void bringToFront(ShapeAnnotation *pShapeAnnotation);
+  void bringForward(ShapeAnnotation *pShapeAnnotation);
+  void sendToBack(ShapeAnnotation *pShapeAnnotation);
+  void sendBackward(ShapeAnnotation *pShapeAnnotation);
   void removeAllComponents() {mComponentsList.clear();}
   void removeAllShapes() {mShapesList.clear();}
   void removeAllConnections() {mConnectionsList.clear();}

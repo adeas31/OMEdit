@@ -133,6 +133,51 @@ void UpdateShapeCommand::undo()
   mpShapeAnnotation->getGraphicsView()->setAddClassAnnotationNeeded(true);
 }
 
+OrderShapeCommand::OrderShapeCommand(ShapeAnnotation *pShapeAnnotation, ShapeAnnotation::OrderType orderType, QUndoCommand *pParent)
+  : QUndoCommand(pParent)
+{
+  mpShapeAnnotation = pShapeAnnotation;
+  mOrderType = orderType;
+}
+
+/*!
+ * \brief OrderShapeCommand::redo
+ * Redo the OrderShapeCommand.
+ */
+void OrderShapeCommand::redo()
+{
+  mpShapeAnnotation->getGraphicsView()->orderShapeInList(mpShapeAnnotation, mOrderType, false);
+  mpShapeAnnotation->getGraphicsView()->reOrderShapes();
+  mpShapeAnnotation->emitOrderChanged(mOrderType);
+  mpShapeAnnotation->getGraphicsView()->setAddClassAnnotationNeeded(true);
+}
+
+/*!
+ * \brief OrderShapeCommand::undo
+ * Undo the OrderShapeCommand.
+ */
+void OrderShapeCommand::undo()
+{
+  if (mOrderType == ShapeAnnotation::BringToFront) {
+    mpShapeAnnotation->getGraphicsView()->orderShapeInList(mpShapeAnnotation, ShapeAnnotation::SendToBack, false);
+    mpShapeAnnotation->getGraphicsView()->reOrderShapes();
+    mpShapeAnnotation->emitOrderChanged(ShapeAnnotation::SendToBack);
+  } else if (mOrderType == ShapeAnnotation::BringForward) {
+    mpShapeAnnotation->getGraphicsView()->orderShapeInList(mpShapeAnnotation, ShapeAnnotation::SendBackward, false);
+    mpShapeAnnotation->getGraphicsView()->reOrderShapes();
+    mpShapeAnnotation->emitOrderChanged(ShapeAnnotation::SendBackward);
+  } else if (mOrderType == ShapeAnnotation::SendToBack) {
+    mpShapeAnnotation->getGraphicsView()->orderShapeInList(mpShapeAnnotation, ShapeAnnotation::BringToFront, false);
+    mpShapeAnnotation->getGraphicsView()->reOrderShapes();
+    mpShapeAnnotation->emitOrderChanged(ShapeAnnotation::BringToFront);
+  } else if (mOrderType == ShapeAnnotation::SendBackward) {
+    mpShapeAnnotation->getGraphicsView()->orderShapeInList(mpShapeAnnotation, ShapeAnnotation::BringForward, false);
+    mpShapeAnnotation->getGraphicsView()->reOrderShapes();
+    mpShapeAnnotation->emitOrderChanged(ShapeAnnotation::BringForward);
+  }
+  mpShapeAnnotation->getGraphicsView()->setAddClassAnnotationNeeded(true);
+}
+
 DeleteShapeCommand::DeleteShapeCommand(ShapeAnnotation *pShapeAnnotation, QUndoCommand *pParent)
   : QUndoCommand(pParent)
 {
