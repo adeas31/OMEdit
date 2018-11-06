@@ -1875,18 +1875,19 @@ void AddSystemCommand::redoInternal()
  */
 void AddSystemCommand::undo()
 {
-  // delete the connector
-  /*! @todo Add a function deleteSystem to delete the system from OMSimulator */
-  //mpGraphicsView->deleteSystem(mName);
+  // delete the system
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  OMSProxy::instance()->omsDelete(nameStructure);
   // delete the LibraryTreeItem
-//  MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpLibraryTreeItem, false);
-//  mpLibraryTreeItem = 0;
-//  // delete the Component
-//  mpGraphicsView->removeItem(mpComponent);
-//  mpGraphicsView->removeItem(mpComponent->getOriginItem());
-//  mpGraphicsView->deleteComponentFromList(mpComponent);
-//  mpComponent->deleteLater();
-//  mpComponent = 0;
+  MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpLibraryTreeItem, false);
+  mpLibraryTreeItem = 0;
+  // delete the Component
+  mpGraphicsView->removeItem(mpComponent);
+  mpGraphicsView->removeItem(mpComponent->getOriginItem());
+  mpGraphicsView->deleteComponentFromList(mpComponent);
+  mpComponent->deleteLater();
+  mpComponent = 0;
 }
 
 /*!

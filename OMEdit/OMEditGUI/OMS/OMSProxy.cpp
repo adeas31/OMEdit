@@ -308,7 +308,12 @@ bool OMSProxy::newModel(QString cref)
  */
 bool OMSProxy::omsDelete(QString cref)
 {
+  QString command = "oms3_delete";
+  QStringList args;
+  args << cref;
+  LOG_COMMAND(command, args);
   oms_status_enu_t status = oms3_delete(cref.toStdString().c_str());
+  logResponse(command, status, &commandTime);
   return statusToBool(status);
 }
 

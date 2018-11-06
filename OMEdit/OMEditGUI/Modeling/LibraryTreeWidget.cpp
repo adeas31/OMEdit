@@ -1422,7 +1422,9 @@ void LibraryTreeModel::updateLibraryTreeItemClassText(LibraryTreeItem *pLibraryT
       pParentLibraryTreeItem->getModelWidget()->setWindowTitle(QString(pParentLibraryTreeItem->getName()).append("*"));
       ModelicaEditor *pModelicaEditor = dynamic_cast<ModelicaEditor*>(pParentLibraryTreeItem->getModelWidget()->getEditor());
       if (pModelicaEditor) {
+        bool blockSignalsState = pModelicaEditor->getPlainTextEdit()->document()->blockSignals(true);
         pModelicaEditor->setPlainText(contents);
+        pModelicaEditor->getPlainTextEdit()->document()->blockSignals(blockSignalsState);
       }
     }
     // if we first updated the parent class then the child classes needs to be updated as well.
@@ -1448,7 +1450,9 @@ void LibraryTreeModel::updateLibraryTreeItemClassText(LibraryTreeItem *pLibraryT
       if (pLibraryTreeItem->getModelWidget() && pLibraryTreeItem->getModelWidget()->getEditor()) {
         OMSimulatorEditor *pOMSimulatorEditor = dynamic_cast<OMSimulatorEditor*>(pLibraryTreeItem->getModelWidget()->getEditor());
         if (pOMSimulatorEditor) {
+          bool blockSignalsState = pOMSimulatorEditor->getPlainTextEdit()->document()->blockSignals(true);
           pOMSimulatorEditor->setPlainText(contents);
+          pOMSimulatorEditor->getPlainTextEdit()->document()->blockSignals(blockSignalsState);
         }
       }
     }

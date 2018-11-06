@@ -4325,10 +4325,7 @@ void ModelWidget::updateModelicaTextManually(QString contents)
  */
 void ModelWidget::updateUndoRedoActions()
 {
-  if (mpIconGraphicsView && mpIconGraphicsView->isVisible()) {
-    MainWindow::instance()->getUndoAction()->setEnabled(mpUndoStack->canUndo());
-    MainWindow::instance()->getRedoAction()->setEnabled(mpUndoStack->canRedo());
-  } else if (mpDiagramGraphicsView && mpDiagramGraphicsView->isVisible()) {
+  if ((mpIconGraphicsView && mpIconGraphicsView->isVisible()) || (mpDiagramGraphicsView && mpDiagramGraphicsView->isVisible()))  {
     MainWindow::instance()->getUndoAction()->setEnabled(mpUndoStack->canUndo());
     MainWindow::instance()->getRedoAction()->setEnabled(mpUndoStack->canRedo());
   } else if (mpEditor && mpEditor->isVisible()) {
