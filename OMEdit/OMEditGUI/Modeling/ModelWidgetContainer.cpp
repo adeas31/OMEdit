@@ -505,6 +505,8 @@ void GraphicsView::deleteComponent(Component *pComponent)
       mpModelWidget->getUndoStack()->push(new DeleteSystemCommand(pComponent, this));
     } else if (pComponent->getLibraryTreeItem()->isComponentElement()) {
       mpModelWidget->getUndoStack()->push(new DeleteSubModelCommand(pComponent, this));
+    } else if (pComponent->getLibraryTreeItem()->getOMSConnector()) {
+      mpModelWidget->getUndoStack()->push(new DeleteConnectorCommand(pComponent, this));
     }
   } else {
     mpModelWidget->getUndoStack()->push(new DeleteComponentCommand(pComponent, this));

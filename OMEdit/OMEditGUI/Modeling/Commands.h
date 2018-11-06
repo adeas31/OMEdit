@@ -490,6 +490,25 @@ private:
   Component *mpDiagramComponent;
 };
 
+class DeleteConnectorCommand : public UndoCommand
+{
+public:
+  DeleteConnectorCommand(Component *pComponent, GraphicsView *pGraphicsView, UndoCommand *pParent = 0);
+  void redoInternal();
+  void undo();
+private:
+  Component *mpComponent;
+  Component *mpIconComponent;
+  Component *mpDiagramComponent;
+  GraphicsView *mpGraphicsView;
+  GraphicsView *mpIconGraphicsView;
+  GraphicsView *mpDiagramGraphicsView;
+  QString mName;
+  oms_causality_enu_t mCausality;
+  oms_signal_type_enu_t mType;
+  QString mAnnotation;
+};
+
 class FMUPropertiesCommand : public UndoCommand
 {
 public:

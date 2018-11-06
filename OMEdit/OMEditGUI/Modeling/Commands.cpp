@@ -2207,17 +2207,105 @@ void AddConnectorCommand::redoInternal()
 void AddConnectorCommand::undo()
 {
   // delete the connector
-  /*! @todo Add a function deleteConnector to delete the connector from OMSimulator */
-  //mpGraphicsView->deleteSubModel(mName);
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  OMSProxy::instance()->omsDelete(nameStructure);
   // delete the LibraryTreeItem
-//  MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpLibraryTreeItem, false);
-//  mpLibraryTreeItem = 0;
-//  // delete the Component
-//  mpGraphicsView->removeItem(mpComponent);
-//  mpGraphicsView->removeItem(mpComponent->getOriginItem());
-//  mpGraphicsView->deleteComponentFromList(mpComponent);
-//  mpComponent->deleteLater();
-//  mpComponent = 0;
+  MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpLibraryTreeItem, false);
+  mpLibraryTreeItem = 0;
+  // delete the Icon Component
+  mpIconGraphicsView->removeItem(mpIconComponent);
+  mpIconGraphicsView->removeItem(mpIconComponent->getOriginItem());
+  mpIconGraphicsView->deleteComponentFromList(mpIconComponent);
+  mpIconComponent->emitDeleted();
+  // delete the Diagram Component
+  mpDiagramGraphicsView->removeItem(mpDiagramComponent);
+  mpDiagramGraphicsView->removeItem(mpDiagramComponent->getOriginItem());
+  mpDiagramGraphicsView->deleteComponentFromList(mpDiagramComponent);
+}
+
+/*!
+ * \brief DeleteConnectorCommand::DeleteConnectorCommand
+ * Used to delete the OMS connector(s).
+ * \param pComponent
+ * \param pGraphicsView
+ * \param pParent
+ */
+DeleteConnectorCommand::DeleteConnectorCommand(Component *pComponent, GraphicsView *pGraphicsView, UndoCommand *pParent)
+  : UndoCommand(pParent)
+{
+  mpComponent = pComponent;
+  mpIconComponent = 0;
+  mpDiagramComponent = 0;
+  mpGraphicsView = pGraphicsView;
+  mpIconGraphicsView = pGraphicsView->getModelWidget()->getIconGraphicsView();
+  mpDiagramGraphicsView = pGraphicsView->getModelWidget()->getDiagramGraphicsView();
+  mName = mpComponent->getName();
+  mCausality = mpComponent->getLibraryTreeItem()->getOMSConnector()->causality;
+  mType = mpComponent->getLibraryTreeItem()->getOMSConnector()->type;
+  mAnnotation = mpComponent->getTransformationString();
+}
+
+/*!
+ * \brief DeleteConnectorCommand::redoInternal
+ * redoInternal the DeleteConnectorCommand.
+ */
+void DeleteConnectorCommand::redoInternal()
+{
+  // delete the system
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  if (!OMSProxy::instance()->omsDelete(nameStructure)) {
+    setFailed(true);
+    return;
+  }
+  // delete the LibraryTreeItem
+  MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpComponent->getLibraryTreeItem(), false);
+  // delete the Icon Component
+  mpIconComponent = mpIconGraphicsView->getComponentObject(mName);
+  if (mpIconComponent) {
+    mpIconGraphicsView->removeItem(mpIconComponent);
+    mpIconGraphicsView->removeItem(mpIconComponent->getOriginItem());
+    mpIconGraphicsView->deleteComponentFromList(mpIconComponent);
+    mpIconComponent->emitDeleted();
+  }
+  // delete the Diagram Component
+  mpDiagramComponent = mpDiagramGraphicsView->getComponentObject(mName);
+  if (mpDiagramComponent) {
+    mpDiagramGraphicsView->removeItem(mpDiagramComponent);
+    mpDiagramGraphicsView->removeItem(mpDiagramComponent->getOriginItem());
+    mpDiagramGraphicsView->deleteComponentFromList(mpDiagramComponent);
+  }
+}
+
+/*!
+ * \brief DeleteConnectorCommand::undo
+ * Undo the DeleteConnectorCommand.
+ */
+void DeleteConnectorCommand::undo()
+{
+  LibraryTreeItem *pParentLibraryTreeItem = mpIconGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  OMSProxy::instance()->addConnector(nameStructure, mCausality, mType);
+  // get oms_connector_t
+  oms_connector_t *pOMSConnector = 0;
+  OMSProxy::instance()->getConnector(nameStructure, &pOMSConnector);
+  // Create a LibraryTreeItem for connector
+  LibraryTreeModel *pLibraryTreeModel = MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel();
+  LibraryTreeItem *pLibraryTreeItem;
+  pLibraryTreeItem = pLibraryTreeModel->createLibraryTreeItem(mName, nameStructure, pParentLibraryTreeItem->getFileName(),
+                                                              true, pParentLibraryTreeItem, 0, pOMSConnector);
+  // add the connector to icon view
+  mpIconComponent->setLibraryTreeItem(pLibraryTreeItem);
+  mpIconGraphicsView->addItem(mpIconComponent);
+  mpIconGraphicsView->addItem(mpIconComponent->getOriginItem());
+  mpIconGraphicsView->addComponentToList(mpIconComponent);
+  mpIconComponent->emitAdded();
+  // add the connector to diagram view
+  mpDiagramComponent->setLibraryTreeItem(pLibraryTreeItem);
+  mpDiagramGraphicsView->addItem(mpDiagramComponent);
+  mpDiagramGraphicsView->addItem(mpDiagramComponent->getOriginItem());
+  mpDiagramGraphicsView->addComponentToList(mpDiagramComponent);
 }
 
 FMUPropertiesCommand::FMUPropertiesCommand(Component *pComponent, QString name, FMUProperties oldFMUProperties,

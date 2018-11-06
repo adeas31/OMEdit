@@ -1664,22 +1664,25 @@ void LibraryTreeModel::showModelWidget(LibraryTreeItem *pLibraryTreeItem, bool s
     MainWindow::instance()->getDocumentationDockWidget()->show();
     MainWindow::instance()->getDocumentationDockWidget()->blockSignals(state);
   } else {
-    // only switch to modeling perspective if show is true and we are not in a debugging perspective.
-    if (show && MainWindow::instance()->getPerspectiveTabBar()->currentIndex() != 3) {
-      MainWindow::instance()->getPerspectiveTabBar()->setCurrentIndex(1);
-    }
-    if (!pLibraryTreeItem->getModelWidget()) {
-      ModelWidget *pModelWidget = new ModelWidget(pLibraryTreeItem, MainWindow::instance()->getModelWidgetContainer());
-      pLibraryTreeItem->setModelWidget(pModelWidget);
-    }
-    /* Ticket #3797
-     * Only show the class Name as window title instead of full path
-     */
-    pLibraryTreeItem->getModelWidget()->setWindowTitle(pLibraryTreeItem->getName() + (pLibraryTreeItem->isSaved() ? "" : "*"));
-    if (show) {
-      MainWindow::instance()->getModelWidgetContainer()->addModelWidget(pLibraryTreeItem->getModelWidget(), true, viewType);
-    } else {
-      pLibraryTreeItem->getModelWidget()->hide();
+    if (!(pLibraryTreeItem->getLibraryType() == LibraryTreeItem::OMS
+          && (pLibraryTreeItem->getOMSConnector() || pLibraryTreeItem->getOMSBusConnector() || pLibraryTreeItem->getOMSTLMBusConnector()))) {
+      // only switch to modeling perspective if show is true and we are not in a debugging perspective.
+      if (show && MainWindow::instance()->getPerspectiveTabBar()->currentIndex() != 3) {
+        MainWindow::instance()->getPerspectiveTabBar()->setCurrentIndex(1);
+      }
+      if (!pLibraryTreeItem->getModelWidget()) {
+        ModelWidget *pModelWidget = new ModelWidget(pLibraryTreeItem, MainWindow::instance()->getModelWidgetContainer());
+        pLibraryTreeItem->setModelWidget(pModelWidget);
+      }
+      /* Ticket #3797
+       * Only show the class Name as window title instead of full path
+       */
+      pLibraryTreeItem->getModelWidget()->setWindowTitle(pLibraryTreeItem->getName() + (pLibraryTreeItem->isSaved() ? "" : "*"));
+      if (show) {
+        MainWindow::instance()->getModelWidgetContainer()->addModelWidget(pLibraryTreeItem->getModelWidget(), true, viewType);
+      } else {
+        pLibraryTreeItem->getModelWidget()->hide();
+      }
     }
   }
   QApplication::restoreOverrideCursor();

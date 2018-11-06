@@ -185,6 +185,7 @@ public:
   QRectF boundingRect() const;
   QRectF itemsBoundingRect();
   void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
+  void setLibraryTreeItem(LibraryTreeItem *pLibraryTreeItem) {mpLibraryTreeItem = pLibraryTreeItem;}
   LibraryTreeItem* getLibraryTreeItem() {return mpLibraryTreeItem;}
   QString getName() {return mpComponentInfo->getName();}
   GraphicsView* getGraphicsView() {return mpGraphicsView;}
