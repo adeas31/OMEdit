@@ -1847,9 +1847,6 @@ void AddSystemCommand::redoInternal()
     LibraryTreeModel *pLibraryTreeModel = MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel();
     mpLibraryTreeItem = pLibraryTreeModel->createLibraryTreeItem(mName, nameStructure, pParentLibraryTreeItem->getFileName(),
                                                                  pParentLibraryTreeItem->isSaved(), pParentLibraryTreeItem, pOMSElement);
-    if (!mOpeningClass) {
-      mpLibraryTreeItem->handleIconUpdated();
-    }
   }
   // add the FMU to view
   ComponentInfo *pComponentInfo = new ComponentInfo;
@@ -1891,6 +1888,74 @@ void AddSystemCommand::undo()
 }
 
 /*!
+ * \brief DeleteSystemCommand::DeleteSystemCommand
+ * Used to delete the OMS system(s).
+ * \param pComponent
+ * \param pGraphicsView
+ * \param pParent
+ */
+DeleteSystemCommand::DeleteSystemCommand(Component *pComponent, GraphicsView *pGraphicsView, UndoCommand *pParent)
+  : UndoCommand(pParent)
+{
+  mpComponent = pComponent;
+  mpGraphicsView = pGraphicsView;
+  mName = mpComponent->getName();
+  mType = mpComponent->getLibraryTreeItem()->getSystemType();
+  mAnnotation = mpComponent->getTransformationString();
+}
+
+/*!
+ * \brief DeleteSystemCommand::redoInternal
+ * redoInternal the DeleteSystemCommand.
+ */
+void DeleteSystemCommand::redoInternal()
+{
+  // delete the system
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  if (!OMSProxy::instance()->omsDelete(nameStructure)) {
+    setFailed(true);
+    return;
+  }
+  // delete the LibraryTreeItem
+  MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpComponent->getLibraryTreeItem(), false);
+  // delete the Component
+  mpGraphicsView->removeItem(mpComponent);
+  mpGraphicsView->removeItem(mpComponent->getOriginItem());
+  mpGraphicsView->deleteComponentFromList(mpComponent);
+  mpComponent->deleteLater();
+  mpComponent = 0;
+  mpGraphicsView->deleteComponentFromClass(mpComponent);
+}
+
+/*!
+ * \brief DeleteSystemCommand::undo
+ * Undo the DeleteSystemCommand.
+ */
+void DeleteSystemCommand::undo()
+{
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  OMSProxy::instance()->addSystem(nameStructure, mType);
+  // get the oms_element_t
+  oms3_element_t *pOMSElement = 0;
+  OMSProxy::instance()->getElement(nameStructure, &pOMSElement);
+  // Create a LibraryTreeItem for system
+  LibraryTreeModel *pLibraryTreeModel = MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel();
+  LibraryTreeItem *pLibraryTreeItem;
+  pLibraryTreeItem = pLibraryTreeModel->createLibraryTreeItem(mName, nameStructure, pParentLibraryTreeItem->getFileName(),
+                                                              pParentLibraryTreeItem->isSaved(), pParentLibraryTreeItem, pOMSElement);
+  // add the FMU to view
+  ComponentInfo *pComponentInfo = new ComponentInfo;
+  pComponentInfo->setName(pLibraryTreeItem->getName());
+  pComponentInfo->setClassName(pLibraryTreeItem->getNameStructure());
+  mpComponent = new Component(mName, pLibraryTreeItem, mAnnotation, QPointF(0, 0), pComponentInfo, mpGraphicsView);
+  mpGraphicsView->addItem(mpComponent);
+  mpGraphicsView->addItem(mpComponent->getOriginItem());
+  mpGraphicsView->addComponentToList(mpComponent);
+}
+
+/*!
  * \brief AddSubModelCommand::AddSubModelCommand
  * Adds a submodel to fmi model.
  * \param name
@@ -1927,7 +1992,6 @@ void AddSubModelCommand::redoInternal()
       setFailed(true);
       return;
     }
-    //mpGraphicsView->addSubModel(mName, mPath);
   }
   if (!mpLibraryTreeItem) {
     // get the oms_element_t
@@ -1992,6 +2056,8 @@ DeleteSubModelCommand::DeleteSubModelCommand(Component *pComponent, GraphicsView
   mpGraphicsView = pGraphicsView;
   mName = mpComponent->getName();
   mPath = mpComponent->getLibraryTreeItem()->getFileName();
+  mElementType = mpComponent->getLibraryTreeItem()->getOMSElement()->type;
+  mSystemType = mpComponent->getLibraryTreeItem()->getSystemType();
   mAnnotation = mpComponent->getTransformationString();
 }
 
@@ -2001,8 +2067,13 @@ DeleteSubModelCommand::DeleteSubModelCommand(Component *pComponent, GraphicsView
  */
 void DeleteSubModelCommand::redoInternal()
 {
-  // delete the submodel
-  mpGraphicsView->deleteSubModel(mpComponent->getName());
+  // delete the system/submodel
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  if (!OMSProxy::instance()->omsDelete(nameStructure)) {
+    setFailed(true);
+    return;
+  }
   // delete the LibraryTreeItem
   MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->unloadOMSModel(mpComponent->getLibraryTreeItem(), false);
   // delete the Component
@@ -2020,11 +2091,16 @@ void DeleteSubModelCommand::redoInternal()
  */
 void DeleteSubModelCommand::undo()
 {
-  // add submodel
-  mpGraphicsView->addSubModel(mName, mPath);
+  // add system/submodel
+  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
+  QString nameStructure = QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure()).arg(mName);
+  if (mElementType == oms_element_system) {
+    OMSProxy::instance()->addSystem(nameStructure, mSystemType);
+  } else {
+    //OMSProxy::instance()->addSubModel(nameStructure, );
+  }
   // Create a LibraryTreeItem for FMU
   LibraryTreeModel *pLibraryTreeModel = MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel();
-  LibraryTreeItem *pParentLibraryTreeItem = mpGraphicsView->getModelWidget()->getLibraryTreeItem();
   LibraryTreeItem *pLibraryTreeItem;
   pLibraryTreeItem = pLibraryTreeModel->createLibraryTreeItem(mName, QString("%1.%2").arg(pParentLibraryTreeItem->getNameStructure())
                                                               .arg(mName), mPath, true, pParentLibraryTreeItem);

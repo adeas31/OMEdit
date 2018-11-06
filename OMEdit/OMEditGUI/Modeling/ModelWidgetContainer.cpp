@@ -501,7 +501,11 @@ void GraphicsView::deleteComponent(Component *pComponent)
   }
   pComponent->setSelected(false);
   if (mpModelWidget->getLibraryTreeItem()->getLibraryType() == LibraryTreeItem::OMS) {
-    mpModelWidget->getUndoStack()->push(new DeleteSubModelCommand(pComponent, this));
+    if (pComponent->getLibraryTreeItem()->isSystemElement()) {
+      mpModelWidget->getUndoStack()->push(new DeleteSystemCommand(pComponent, this));
+    } else if (pComponent->getLibraryTreeItem()->isComponentElement()) {
+      mpModelWidget->getUndoStack()->push(new DeleteSubModelCommand(pComponent, this));
+    }
   } else {
     mpModelWidget->getUndoStack()->push(new DeleteComponentCommand(pComponent, this));
   }

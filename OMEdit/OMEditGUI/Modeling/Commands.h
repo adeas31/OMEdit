@@ -422,6 +422,20 @@ private:
   Component *mpComponent;
 };
 
+class DeleteSystemCommand : public UndoCommand
+{
+public:
+  DeleteSystemCommand(Component *pComponent, GraphicsView *pGraphicsView, UndoCommand *pParent = 0);
+  void redoInternal();
+  void undo();
+private:
+  Component *mpComponent;
+  GraphicsView *mpGraphicsView;
+  QString mName;
+  oms_system_enu_t mType;
+  QString mAnnotation;
+};
+
 class AddSubModelCommand : public UndoCommand
 {
 public:
@@ -450,6 +464,8 @@ private:
   GraphicsView *mpGraphicsView;
   QString mName;
   QString mPath;
+  oms3_element_enu_t mElementType;
+  oms_system_enu_t mSystemType;
   QString mAnnotation;
 };
 
