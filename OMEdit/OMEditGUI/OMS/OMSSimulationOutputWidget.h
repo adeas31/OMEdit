@@ -41,6 +41,7 @@
 #include <QWidget>
 #include <QProgressBar>
 #include <QDateTime>
+#include <QTimer>
 
 class ArchivedOMSSimulationItem;
 
@@ -62,11 +63,13 @@ private:
   ArchivedOMSSimulationItem *mpArchivedOMSSimulationItem;
   QDateTime mResultFileLastModifiedDateTime;
   bool mIsSimulationRunning;
+  QTimer mResultUpdateTimer;
 signals:
   void sendSimulationProgress(QString ident, double time, oms_status_enu_t status);
 public slots:
   void cancelSimulation();
   void simulationProgress(QString ident, double time, oms_status_enu_t status);
+  void updateResults();
 protected:
   virtual void keyPressEvent(QKeyEvent *event);
 };

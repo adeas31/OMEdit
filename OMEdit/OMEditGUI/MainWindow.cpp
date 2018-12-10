@@ -755,6 +755,7 @@ void MainWindow::instantiateOMSModel(LibraryTreeItem *pLibraryTreeItem, bool che
     } else {
       mpOMSInstantiateModelAction->setText(Helper::instantiateModel);
       mpOMSInstantiateModelAction->setText(Helper::instantiateOMSModelTip);
+      mpOMSInstantiateModelAction->setChecked(false);
       mpOMSSimulateAction->setEnabled(false);
       pLibraryTreeItem->setModelState(oms_modelState_terminated);
     }

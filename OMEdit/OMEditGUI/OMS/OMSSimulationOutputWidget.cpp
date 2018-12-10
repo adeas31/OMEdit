@@ -37,6 +37,7 @@
 #include "OMSSimulationDialog.h"
 #include "OMSProxy.h"
 #include "Modeling/LibraryTreeWidget.h"
+#include "Plotting/VariablesWidget.h"
 
 #include <QGridLayout>
 #include <QtCore/qmath.h>
@@ -93,6 +94,9 @@ OMSSimulationOutputWidget::OMSSimulationOutputWidget(OMSSimulationOptions omsSim
     if (OMSProxy::instance()->simulate_asynchronous(mOMSSimulationOptions.getModelName())) {
       mIsSimulationRunning = true;
       mpCancelSimulationButton->setEnabled(true);
+      mResultUpdateTimer.setInterval(1000);
+      connect(&mResultUpdateTimer, SIGNAL(timeout()), SLOT(updateResults()));
+      mResultUpdateTimer.start();
     } else {
       mpProgressLabel->setText(tr("Simulation using the <b>%1</b> model is failed. %2")
                                .arg(mOMSSimulationOptions.getModelName())
@@ -145,6 +149,9 @@ void OMSSimulationOutputWidget::cancelSimulation()
     mpProgressBar->setValue(mpProgressBar->maximum());
     mIsSimulationRunning = false;
     mpCancelSimulationButton->setEnabled(false);
+    if (mResultUpdateTimer.isActive()) {
+      mResultUpdateTimer.stop();
+    }
   }
 }
 
@@ -158,6 +165,13 @@ void OMSSimulationOutputWidget::cancelSimulation()
  */
 void OMSSimulationOutputWidget::simulationProgress(QString ident, double time, oms_status_enu_t status)
 {
+  static bool readResultFile = false;
+  static int counter = 0;
+  if (counter > 100 && !readResultFile) {
+    readResultFile = true;
+    MainWindow::instance()->getOMSSimulationDialog()->simulationFinished(mOMSSimulationOptions, mResultFileLastModifiedDateTime);
+  }
+  counter++;
   if (status < oms_status_warning) {
     int progress = (time * 100) / mOMSSimulationOptions.getStopTime();
     mpProgressBar->setValue(progress);
@@ -166,6 +180,9 @@ void OMSSimulationOutputWidget::simulationProgress(QString ident, double time, o
       mpProgressBar->setValue(mpProgressBar->maximum());
       mIsSimulationRunning = false;
       mpCancelSimulationButton->setEnabled(false);
+      if (mResultUpdateTimer.isActive()) {
+        mResultUpdateTimer.stop();
+      }
       mpArchivedOMSSimulationItem->setStatus(Helper::finished);
       // terminate the model after the simulation is finished successfully.
       LibraryTreeItem *pLibraryTreeItem;
@@ -174,9 +191,15 @@ void OMSSimulationOutputWidget::simulationProgress(QString ident, double time, o
         MainWindow::instance()->instantiateOMSModel(pLibraryTreeItem, false);
       }
       // simulation finished show the results
-      MainWindow::instance()->getOMSSimulationDialog()->simulationFinished(mOMSSimulationOptions, mResultFileLastModifiedDateTime);
+      MainWindow::instance()->getVariablesWidget()->variablesUpdated();
     }
   }
+}
+
+void OMSSimulationOutputWidget::updateResults()
+{
+  qDebug() << "updateResult";
+  MainWindow::instance()->getVariablesWidget()->variablesUpdated();
 }
 
 /*!
