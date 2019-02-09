@@ -44,6 +44,7 @@ TimeManager::TimeManager(const double simTime, const double realTime, const doub
     _startTime(startTime),
     _endTime(endTime),
     _pause(true),
+    _repeat(false),
     mSpeedUp(1.0)
 {
   mpUpdateSceneTimer = new QTimer;
@@ -139,6 +140,16 @@ void TimeManager::setPause(const bool status)
   } else {
     mpUpdateSceneTimer->start();
   }
+}
+
+bool TimeManager::canRepeat() const
+{
+  return _repeat;
+}
+
+void TimeManager::setRepeat(const bool repeat)
+{
+  _repeat = repeat;
 }
 
 void TimeManager::setSpeedUp(double value)
