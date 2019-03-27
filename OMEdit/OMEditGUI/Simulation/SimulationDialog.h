@@ -172,6 +172,12 @@ private:
   QComboBox *mpProfilingComboBox;
   QCheckBox *mpCPUTimeCheckBox;
   QCheckBox *mpEnableAllWarningsCheckBox;
+  QGroupBox *mpReconcileGroupBox;
+  Label *mpCovarianceMatrixSxLabel;
+  QLineEdit *mpCovarianceMatrixSxTextBox;
+  QPushButton *mpCovarianceMatrixSxBrowseButton;
+  Label *mpNumberOfConvergenceIterationsLabel;
+  QLineEdit *mpNumberOfConvergenceIterationsTextBox;
   QGroupBox *mpLoggingGroupBox;
   QGridLayout *mpLoggingGroupLayout;
   Label *mpAdditionalSimulationFlagsLabel;
@@ -250,6 +256,7 @@ public slots:
   void interactiveSimulation(bool checked);
   void browseModelSetupFile();
   void browseEquationSystemInitializationFile();
+  void browseCovarianceMatrixSxFile();
   void showSimulationFlagsHelp();
   void showArchivedSimulation(QTreeWidgetItem *pTreeWidgetItem);
   void simulate();
